@@ -1,21 +1,34 @@
 const { Pool } = require('pg');
 
-class NotesService {
+class OpenmusicService {
    constructor() {
       this._pool = new Pool();
    }
 
-   async getNotes(userId) {
+   async getPlaylist(playlistId) {
       const query = {
-         text: `SELECT notes.* FROM notes
-            LEFT JOIN collaborations ON collaborations.note_id = notes.id
-            WHERE notes.owner = $1 OR collaborations.user_id = $1
-            GROUP BY notes.id`,
-         values: [userId],
+         text: `
+            SELECT
+               playlists.id AS playlist_id,
+               playlists.name AS playlist_name,
+               songs.id AS song_id,
+               songs.title,
+               songs.performer
+            FROM
+               playlists
+            JOIN
+               playlist_songs ON playlists.id = playlist_songs.playlist_id
+            JOIN
+               songs ON playlist_songs.song_id = songs.id
+            WHERE
+               playlists.id = $1
+         `,
+         values: [playlistId],
       };
+
       const result = await this._pool.query(query);
       return result.rows;
    }
 }
 
-module.exports = NotesService;
+module.exports = OpenmusicService;
